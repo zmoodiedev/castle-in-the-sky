@@ -145,18 +145,21 @@ async function fetchDiademItems(query) {
     );
     if (!res.ok) { showDropdown(); return; }
     const data = await res.json();
+    console.log('Garland Tools raw response:', data);
 
-    dropdownItems = (data || [])
-      .filter(r => r.type === 'item' && r.name && r.name.includes('Skybuilders'))
-      .map(r => {
-        const iconId = r.obj?.i;
-        let iconUrl = null;
-        if (iconId) {
-          const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
-          iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
-        }
-        return { name: r.name, iconUrl, job: null };
-      });
+    const filtered = (data || []).filter(r => r.name && r.name.includes('Skybuilders'));
+    console.log('Garland Tools raw response:', data);
+    console.log('Filtered Skybuilders items:', filtered);
+
+    dropdownItems = filtered.map(r => {
+      const iconId = r.obj?.i;
+      let iconUrl = null;
+      if (iconId) {
+        const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
+        iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
+      }
+      return { name: r.name, iconUrl, job: null };
+    });
 
     showDropdown();
   } catch(e) {
