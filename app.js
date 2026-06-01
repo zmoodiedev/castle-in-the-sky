@@ -124,6 +124,7 @@ const JOB_STYLE = {
 };
 
 function onGatherSearch(val) {
+  console.log('onGatherSearch fired:', val);
   pendingIcon = null;
   clearTimeout(searchTimer);
   const q = val.trim();
@@ -163,6 +164,7 @@ async function fetchDiademItems(query) {
 
     showDropdown();
   } catch(e) {
+    console.error('fetchDiademItems error:', e);
     const dd = document.getElementById('gather-dropdown');
     dd.innerHTML = `<div class="gather-dropdown-empty">Search unavailable — check your connection</div>`;
     dd.style.display = 'block';
