@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pteranodon Tracker — Firmament Progress</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <p class="header-eyebrow">Final Fantasy XIV — The Firmament</p>
+    <h1>Pteranodon Tracker<span>Castle in the Sky Achievement</span></h1>
+    <div class="divider"></div>
+  </header>
+
+  <nav class="navbar">
+    <button class="nav-btn active" onclick="switchView('tracker')">Progress Tracker</button>
+    <button class="nav-btn" onclick="switchView('gatherables')">Gatherables</button>
+  </nav>
+
+  <!-- Progress Tracker View -->
+  <div class="view active" id="view-tracker">
+    <p class="section-label">Crafters</p>
+    <div class="jobs-grid" id="crafters-grid"></div>
+
+    <p class="section-label">Gatherers</p>
+    <div class="jobs-grid" id="gatherers-grid"></div>
+
+    <div class="summary">
+      <div class="stat"><div class="stat-label">Jobs complete</div><div class="stat-value" id="jobs-done">0 / 11</div></div>
+      <div class="stat"><div class="stat-label">Total points</div><div class="stat-value" id="total-pts">0</div></div>
+      <div class="stat"><div class="stat-label">Remaining</div><div class="stat-value" id="total-rem">5,500,000</div></div>
+    </div>
+
+    <div class="overall-wrap">
+      <div class="overall-header">
+        <span class="overall-title">Overall progress</span>
+        <span class="overall-pct" id="overall-pct">0.0%</span>
+      </div>
+      <div class="overall-track">
+        <div class="overall-fill" id="overall-fill" style="width:0%"></div>
+      </div>
+      <p class="overall-sub">Each job requires 500,000 firmament points &nbsp;·&nbsp; 11 jobs total &nbsp;·&nbsp; 5,500,000 max</p>
+    </div>
+  </div>
+
+  <!-- Gatherables View -->
+  <div class="view" id="view-gatherables">
+    <p class="section-label" style="margin-top:0">Add Item</p>
+    <div class="gather-add-row">
+      <div class="gather-search-wrap">
+        <input type="text" id="gather-name-input" placeholder="Search Diadem items…"
+          autocomplete="off" spellcheck="false"
+          oninput="onGatherSearch(this.value)"
+          onkeydown="onGatherSearchKey(event)" />
+        <div class="gather-dropdown" id="gather-dropdown" style="display:none"></div>
+      </div>
+      <input type="number" id="gather-target-input" min="1" placeholder="Target (opt.)"
+        onkeydown="if(event.key==='Enter') addGatherable()" />
+      <button class="btn-add" onclick="addGatherable()">+ Add</button>
+    </div>
+
+    <div class="gather-grid" id="gather-grid"></div>
+    <div class="gather-empty" id="gather-empty" style="display:none">
+      <p>No items yet</p>
+      <p>Add something you're gathering above to start tracking</p>
+    </div>
+  </div>
+
+  <footer>Progress saved automatically &nbsp;·&nbsp; Good luck, Skybuilder</footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
