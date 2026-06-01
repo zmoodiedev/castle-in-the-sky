@@ -104,6 +104,31 @@ let pendingIcon = null;
 let dropdownItems = [];
 let dropdownIndex = -1;
 let searchTimer = null;
+let diademCache = null;
+
+async function initDiademCache() {
+  try {
+    const res = await fetch(
+      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent('Skybuilders')}&lang=en`
+    );
+    if (!res.ok) { diademCache = []; return; }
+    const data = await res.json();
+    diademCache = (data || [])
+      .filter(r => r.type === 'item' && r.obj?.n &&
+        (r.obj.n.includes('Grade 4 Skybuilders') || r.obj.n.includes('Artisanal Skybuilders')))
+      .map(r => {
+        const iconId = r.obj.i;
+        let iconUrl = null;
+        if (iconId) {
+          const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
+          iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
+        }
+        return { name: r.obj.n, iconUrl, job: null };
+      });
+  } catch(e) {
+    diademCache = [];
+  }
+}
 
 function loadGatherables() {
   try {
@@ -126,45 +151,20 @@ const JOB_STYLE = {
 function onGatherSearch(val) {
   pendingIcon = null;
   clearTimeout(searchTimer);
-  const q = val.trim();
+  const q = val.trim().toLowerCase();
   if (q.length < 2) { hideDropdown(); return; }
 
-  const dd = document.getElementById('gather-dropdown');
-  dd.innerHTML = `<div class="gather-dropdown-loading">Searching…</div>`;
-  dd.style.display = 'block';
-  dropdownItems = [];
-  dropdownIndex = -1;
-
-  searchTimer = setTimeout(() => fetchDiademItems(q), 400);
-}
-
-async function fetchDiademItems(query) {
-  const apiQuery = query.toLowerCase().includes('skybuilder') ? query : `Skybuilders ${query}`;
-  try {
-    const res = await fetch(
-      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent(apiQuery)}&lang=en`
-    );
-    if (!res.ok) { showDropdown(); return; }
-    const data = await res.json();
-
-    dropdownItems = (data || [])
-      .filter(r => r.type === 'item' && r.obj?.n?.includes('Skybuilders'))
-      .map(r => {
-        const iconId = r.obj.i;
-        let iconUrl = null;
-        if (iconId) {
-          const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
-          iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
-        }
-        return { name: r.obj.n, iconUrl, job: null };
-      });
-
+  if (diademCache !== null) {
+    dropdownItems = diademCache.filter(item => item.name.toLowerCase().includes(q));
     showDropdown();
-  } catch(e) {
-    const dd = document.getElementById('gather-dropdown');
-    dd.innerHTML = `<div class="gather-dropdown-empty">Search unavailable — check your connection</div>`;
-    dd.style.display = 'block';
+    return;
   }
+
+  // Cache still loading — show indicator and retry shortly
+  const dd = document.getElementById('gather-dropdown');
+  dd.innerHTML = `<div class="gather-dropdown-loading">Loading items…</div>`;
+  dd.style.display = 'block';
+  searchTimer = setTimeout(() => onGatherSearch(val), 200);
 }
 
 function jobBadge(job, size) {
@@ -444,3 +444,4 @@ recalc();
 loadGatherables();
 renderGatherables();
 initGatherDrag();
+initDiademCache();
