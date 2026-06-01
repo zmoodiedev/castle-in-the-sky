@@ -147,7 +147,7 @@ async function fetchDiademItems(query) {
     const data = await res.json();
 
     dropdownItems = (data || [])
-      .filter(r => r.type === 'item' && r.name && r.name.includes("Skybuilders'"))
+      .filter(r => r.type === 'item' && r.name && r.name.includes('Skybuilders'))
       .map(r => {
         const iconId = r.obj?.i;
         let iconUrl = null;
@@ -159,7 +159,11 @@ async function fetchDiademItems(query) {
       });
 
     showDropdown();
-  } catch(e) { showDropdown(); }
+  } catch(e) {
+    const dd = document.getElementById('gather-dropdown');
+    dd.innerHTML = `<div class="gather-dropdown-empty">Search unavailable — check your connection</div>`;
+    dd.style.display = 'block';
+  }
 }
 
 function jobBadge(job, size) {
