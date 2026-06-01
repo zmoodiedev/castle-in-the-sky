@@ -124,7 +124,6 @@ const JOB_STYLE = {
 };
 
 function onGatherSearch(val) {
-  console.log('onGatherSearch fired:', val);
   pendingIcon = null;
   clearTimeout(searchTimer);
   const q = val.trim();
@@ -140,31 +139,28 @@ function onGatherSearch(val) {
 }
 
 async function fetchDiademItems(query) {
+  const apiQuery = query.toLowerCase().includes('skybuilder') ? query : `Skybuilders ${query}`;
   try {
     const res = await fetch(
-      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent(query)}&lang=en`
+      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent(apiQuery)}&lang=en`
     );
     if (!res.ok) { showDropdown(); return; }
     const data = await res.json();
-    console.log('Garland Tools raw response:', data);
 
-    const filtered = (data || []).filter(r => r.name && r.name.includes('Skybuilders'));
-    console.log('Garland Tools raw response:', data);
-    console.log('Filtered Skybuilders items:', filtered);
-
-    dropdownItems = filtered.map(r => {
-      const iconId = r.obj?.i;
-      let iconUrl = null;
-      if (iconId) {
-        const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
-        iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
-      }
-      return { name: r.name, iconUrl, job: null };
-    });
+    dropdownItems = (data || [])
+      .filter(r => r.type === 'item' && r.obj?.n?.includes('Skybuilders'))
+      .map(r => {
+        const iconId = r.obj.i;
+        let iconUrl = null;
+        if (iconId) {
+          const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
+          iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
+        }
+        return { name: r.obj.n, iconUrl, job: null };
+      });
 
     showDropdown();
   } catch(e) {
-    console.error('fetchDiademItems error:', e);
     const dd = document.getElementById('gather-dropdown');
     dd.innerHTML = `<div class="gather-dropdown-empty">Search unavailable — check your connection</div>`;
     dd.style.display = 'block';
