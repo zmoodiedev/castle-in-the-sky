@@ -104,31 +104,40 @@ let pendingIcon = null;
 let dropdownItems = [];
 let dropdownIndex = -1;
 let searchTimer = null;
-let diademCache = null;
 
-async function initDiademCache() {
-  try {
-    const res = await fetch(
-      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent('Skybuilders')}&lang=en`
-    );
-    if (!res.ok) { diademCache = []; return; }
-    const data = await res.json();
-    diademCache = (data || [])
-      .filter(r => r.type === 'item' && r.obj?.n &&
-        (r.obj.n.includes('Grade 4 Skybuilders') || r.obj.n.includes('Artisanal Skybuilders')))
-      .map(r => {
-        const iconId = r.obj.i;
-        let iconUrl = null;
-        if (iconId) {
-          const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
-          iconUrl = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
-        }
-        return { name: r.obj.n, iconUrl, job: null };
-      });
-  } catch(e) {
-    diademCache = [];
-  }
-}
+const DIADEM_ITEMS = [
+  // Miner
+  { name: "Grade 4 Skybuilders' Alumen",                        job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Cloudstone",                    job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Darksteel Ore",                 job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Electrum Ore",                  job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Mythrite Ore",                  job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Spring Water",                  job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Umbral Levinsand",              job: 'MIN' },
+  { name: "Grade 4 Skybuilders' Umbral Flarerock",              job: 'MIN' },
+  { name: "Grade 4 Artisanal Skybuilders' Silex",               job: 'MIN' },
+  { name: "Rarefied Grade 4 Skybuilders' Umbral Levinsand",     job: 'MIN' },
+  // Botanist
+  { name: "Grade 4 Skybuilders' Aloe",                          job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Cocoon",                        job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Gossamer Cotton Boll",          job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Hemp",                          job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Mistletoe",                     job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Umbral Galewood Branch",        job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Umbral Heartwood",              job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Umbral Dirtleaf",               job: 'BTN' },
+  { name: "Grade 4 Skybuilders' Wheat",                         job: 'BTN' },
+  { name: "Rarefied Grade 4 Skybuilders' Aloe",                 job: 'BTN' },
+  // Fisher
+  { name: "Grade 4 Skybuilders' Arbor Eel",                     job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Blind Manta",                   job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Cloudfish",                     job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Dravanian Smelt",               job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Dragonspine",                   job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Mythril Bass",                  job: 'FSH' },
+  { name: "Grade 4 Skybuilders' Thundergut",                    job: 'FSH' },
+  { name: "Grade 4 Skybuilders' White Oil Fish",                job: 'FSH' },
+];
 
 function loadGatherables() {
   try {
@@ -152,19 +161,42 @@ function onGatherSearch(val) {
   pendingIcon = null;
   clearTimeout(searchTimer);
   const q = val.trim().toLowerCase();
-  if (q.length < 2) { hideDropdown(); return; }
+  if (q.length < 1) { hideDropdown(); return; }
 
-  if (diademCache !== null) {
-    dropdownItems = diademCache.filter(item => item.name.toLowerCase().includes(q));
-    showDropdown();
-    return;
+  dropdownItems = DIADEM_ITEMS
+    .filter(item => item.name.toLowerCase().includes(q))
+    .map(item => ({ name: item.name, job: item.job, iconUrl: null }));
+
+  showDropdown();
+
+  if (dropdownItems.length > 0) {
+    searchTimer = setTimeout(() => fetchIcons(val.trim()), 400);
   }
+}
 
-  // Cache still loading — show indicator and retry shortly
-  const dd = document.getElementById('gather-dropdown');
-  dd.innerHTML = `<div class="gather-dropdown-loading">Loading items…</div>`;
-  dd.style.display = 'block';
-  searchTimer = setTimeout(() => onGatherSearch(val), 200);
+async function fetchIcons(query) {
+  try {
+    const res = await fetch(
+      `https://www.garlandtools.org/api/search.php?text=${encodeURIComponent(query)}&lang=en`
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const lookup = {};
+    (data || []).forEach(r => {
+      if (r.type === 'item' && r.obj?.i && r.obj?.n) {
+        const iconId = r.obj.i;
+        const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
+        lookup[r.obj.n] = `https://xivapi.com/i/${folder}/${String(iconId).padStart(6, '0')}.png`;
+      }
+    });
+
+    let updated = false;
+    dropdownItems.forEach(item => {
+      if (lookup[item.name]) { item.iconUrl = lookup[item.name]; updated = true; }
+    });
+    if (updated) showDropdown();
+  } catch(e) {}
 }
 
 function jobBadge(job, size) {
@@ -462,4 +494,3 @@ recalc();
 loadGatherables();
 renderGatherables();
 initGatherDrag();
-initDiademCache();
