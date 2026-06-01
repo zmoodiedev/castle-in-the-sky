@@ -274,7 +274,25 @@ function setGatherableCount(id, val) {
   if (!g) return;
   g.count = Math.max(0, parseInt(val) || 0);
   persistGatherables();
-  renderGatherCard(id);
+  refreshGatherProgress(id);
+}
+
+function refreshGatherProgress(id) {
+  const g = gatherables.find(g => g.id === id);
+  if (!g || g.target === null || g.target <= 0) return;
+  const p = Math.min(100, (g.count / g.target) * 100);
+  const done = g.count >= g.target;
+  const bar = document.getElementById('gbar-' + id);
+  const label = document.getElementById('glabel-' + id);
+  if (bar) {
+    bar.style.width = p.toFixed(1) + '%';
+    bar.style.background = done ? '#1D9E75' : 'var(--gold)';
+  }
+  if (label) {
+    label.innerHTML = `
+      <span>${g.count.toLocaleString()} / ${g.target.toLocaleString()}</span>
+      ${done ? `<span class="gather-done-badge">${checkSVG} Done</span>` : `<span>${p.toFixed(0)}%</span>`}`;
+  }
 }
 
 function addToGatherable(id) {
@@ -308,11 +326,11 @@ function renderGatherCard(id) {
 
   const barHtml = hasTgt ? `
     <div class="prog-wrap" style="margin-top:10px">
-      <div class="prog-bar" style="width:${p.toFixed(1)}%;background:${done ? '#1D9E75' : 'var(--gold)'}"></div>
+      <div class="prog-bar" id="gbar-${g.id}" style="width:${p.toFixed(1)}%;background:${done ? '#1D9E75' : 'var(--gold)'}"></div>
     </div>` : '';
 
   const bottomHtml = hasTgt ? `
-    <div class="gather-target-label">
+    <div class="gather-target-label" id="glabel-${g.id}">
       <span>${g.count.toLocaleString()} / ${g.target.toLocaleString()}</span>
       ${done ? `<span class="gather-done-badge">${checkSVG} Done</span>` : `<span>${p.toFixed(0)}%</span>`}
     </div>` : '';
